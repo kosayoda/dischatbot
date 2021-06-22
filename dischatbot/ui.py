@@ -5,6 +5,7 @@ import typing as t
 
 import prompt_toolkit
 
+import discord
 from discord import Message
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
@@ -18,17 +19,14 @@ from dischatbot.bot import Bot
 from dischatbot.models.chat import Chat
 
 class SystemMessage(enum.Enum):
-    INFO = "[ INFO  ]"
+    INFO = "[  INFO ]"
     ERROR = "[ ERROR ]"
-
 
 # -- Keybindings --
 kb = KeyBindings()
 @kb.add("c-c")
 def _(event):
     event.app.exit()
-
-USER_ID = 180853534617632768
 
 class Application(prompt_toolkit.Application):
     HELP_TEXT = """Welcome to dischatbot. Run /help for a list of commands."""
@@ -100,6 +98,13 @@ class Application(prompt_toolkit.Application):
         else:
             await self.update_chat()
             self.send_system_message(f"Now connected to: {chat.recipient}", SystemMessage.INFO)
+
+    async def do_emoji(self, query: str = None):
+        emoji = discord.utils.find(lambda e: e.name == query, self.bot.emojis)
+        if emoji is None:
+            self.send_system_message(f"Unknown emoji: {query}", SystemMessage.ERROR)
+        else:
+            await self.do_chat(self.current_chat.user_id, str(emoji))
 
     async def update_chat(self, message: Message = None):
         if message is None:
